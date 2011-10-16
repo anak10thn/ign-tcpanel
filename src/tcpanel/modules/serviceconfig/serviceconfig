@@ -1,0 +1,119 @@
+#!/bin/sh
+
+# Copyright Jean-Philippe Guillemin <jp.guillemin@free.fr>. This program is free software;
+# you can redistribute it and/or modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2 of the License,
+# or (at your option) any later version. Please take a look at http://www.gnu.org/copyleft/gpl.htm
+
+# Select/deselect system daemons (services)"
+
+
+# 02/09/2005
+#  * Added Xdialog support 
+#    for Zenwalk
+# 01/11/2005
+#  * Code cleaning and icon added 
+# 14/04/2006
+#  * Full rewriting, added serviceinfo database 
+# 22/09/2006
+#  * added external/dynamic serviceinfo database 
+# 07/06/2007
+#  * huge speed improvement, blacklist list is now in /etc/svcblklist. --Teran McKinney (sega01)
+# 10/06/2007
+#  * real time daemon status handling -- jp
+
+
+if [[ "$DISPLAY" && "$(which Xdialog 2>&1 | grep -v "which: no")" ]]; then
+	dialog="Xdialog --wrap --left --auto-placement --icon serviceconfig "
+else
+	dialog="dialog"
+fi
+
+# Translations only work with utf8 locales
+if [ ! `echo $LANG | grep -i utf` ]; then
+	LANG=en_US
+fi
+
+# Gettext internationalization
+export TEXTDOMAIN="serviceconfig"
+export TEXTDOMAINDIR="/usr/share/locale"
+. gettext.sh
+
+# Path needs to be extended in case you're only half a root :)
+export PATH="${PATH}:/usr/sbin:/sbin"
+
+# Some globals
+rcdir='/etc/rc.d'
+descdir='/etc/rc.d/desc.d'
+
+checkstatus(){
+  if [ -x $rcdir/rc.$1 ]; then
+    echo "on"
+  else
+    echo "off"
+  fi
+}
+
+checkrun(){
+  if [ -x $rcdir/rc.$1 ]; then
+    echo "on"
+  else
+    echo "off"
+  fi
+}
+
+serviceinfo(){
+sed -n "s/^${1}:\(.*\):.*$/\1/p" $descdir/*.txt
+}
+
+
+getdaemon(){
+  daemon=$(sed -n "s/^${1}:.*:\(.*\)$/\1/p" $descdir/*.txt)
+  pidof -x $daemon
+}
+
+blacklist(){
+	echo $1 | grep -f /etc/svcblklist
+}
+
+dialogscript="${dialog} \
+--stdout \
+--title \"$(eval_gettext 'Startup services')\" \
+--cancel-label \"$(eval_gettext 'Exit')\" \
+--item-help \
+--checklist \
+\"$(eval_gettext 'The selected services will be started at boot time :')\" \
+20 75 14 "
+
+for rcscript in $rcdir/rc.* ; do
+  [ "$(blacklist $rcscript)" ] && continue
+  service="$(basename $rcscript | sed -e 's/^rc\.\(.*\)$/\1/')"
+  servicelist="${servicelist} $service"
+  rcstatus="$(checkstatus $service)"
+  desc="$(serviceinfo $service)"
+  [ ! "$desc" ] && desc="The $service service"
+  dialogscript="${dialogscript} \"$service\" \"$desc\" $rcstatus \"\""
+done
+
+# Execute the dialog script
+reply=$(eval "$dialogscript")
+
+if [ "$reply" ]; then
+  for service in $servicelist ; do
+    if [ "$(echo $reply | grep -w $service)" ] ; then
+      chmod 755 $rcdir/rc.$service 1>&2 2>/dev/null
+      if [ "$1" != "passive" ]; then
+        [ ! "$(getdaemon $service)" ] && /bin/sh $rcdir/rc.$service start 1>&2 2>/dev/null &
+      fi
+    else
+      chmod 644 $rcdir/rc.$service 1>&2 2>/dev/null
+      if [ "$1" != "passive" ]; then
+        [ "$(getdaemon $service)" ] && /bin/sh $rcdir/rc.$service stop 1>&2 2>/dev/null &
+        kill -9 $(getdaemon $service) 1>&2 2>/dev/null 
+      fi
+    fi
+  done
+fi
+
+# end
+

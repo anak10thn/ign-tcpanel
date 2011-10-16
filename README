@@ -1,0 +1,18 @@
+TCPanel
+-------
+
+TCPanel control panel is standard on Toroo GNU / Linux, which serves to manage
+service, repository, packages, kernel modules, etc.. TCPanel made ​​with PHP-GTK2 and can work well on Slackware GNU / Linux.
+
+INSTALL
+-------
+~ make install
+
+UNINSTALL
+-------
+~ make uninstall
+
+BUILD TOROO PACKAGE
+-------------------
+~ make toroobuild
+

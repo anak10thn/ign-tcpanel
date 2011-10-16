@@ -1,0 +1,6 @@
+Perubahan
+---------
+# Penambahan modul SERVICE CONFIG, MUDUL MANAGER, DISK MANAGER - 30/08/2011
+# Penambahan requiredbuilder dan md5sum ceator pada modul build paket tlz - 2/09/2011
+# Mengganti path dan memindahkan modul serviceconfig dan kernelconfig ke /usr/share/tcpanel/modules/nama_modul - 3/09/2011
+# Merubah path source dan menambahkan Makefile - 19/09/2011

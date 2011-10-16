@@ -1,0 +1,181 @@
+#!/bin/sh
+
+# Copyright Jean-Philippe Guillemin <jp.guillemin@free.fr>. This program is free software;
+# you can redistribute it and/or modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2 of the License,
+# or (at your option) any later version. Please take a look at http://www.gnu.org/copyleft/gpl.htm
+
+# Load/unload kernel drivers (modules)"
+
+
+# 10/2009
+#	Creation
+
+
+
+if [[ "$DISPLAY" && "$(which Xdialog 2>&1 | grep -v "which: no")" ]]; then
+	dialog="Xdialog --wrap --left --auto-placement --icon kernelconfig"
+	timeout="--timeout 3"
+else
+	dialog="dialog"
+	timeout=""
+fi
+
+# Translations only work with utf8 locales
+if [ ! `echo $LANG | grep -i utf` ]; then
+	LANG=en_US
+fi
+
+# Gettext internationalization
+export TEXTDOMAIN="kernelconfig"
+export TEXTDOMAINDIR="/usr/share/locale"
+. gettext.sh
+
+# Path needs to be extended in case you're only half a root :)
+export PATH="${PATH}:/usr/sbin:/sbin"
+
+# Some globals
+export rcmodules='/etc/rc.d/rc.modules'
+export blacklistfile='/etc/modprobe.d/blacklist.conf'
+export modules=''
+saveconfig='0'
+
+# unloadmodule $module [$save=1|0]
+loadmodule(){
+	result="$(/sbin/modprobe $1 2>&1)"
+	if [ "$?" = "1" ] ; then
+		$dialog $timeout --title "$(eval_gettext 'Error')" --msgbox "$result" 0 0
+	else
+		if [ "$2" = "1" ] ; then
+			if [ "$(grep "$1" $rcmodules)" ] ; then
+				sed -i "s|^.*[ \t]\+$1[ \t]*$|/sbin/modprobe $1|" $rcmodules
+			else
+				echo "/sbin/modprobe $1" >> $rcmodules
+			fi	
+			
+			if [ "$(grep -e "blacklist $1" $blacklistfile)" ] ; then
+				sed -i "s|^.*blacklist[ \t]\+$1[ \t]*$|\# blacklist $1|" $blacklistfile
+			fi
+		fi
+		modules="$(echo "$modules" | sed -e "s/\(\"$1\" .*\) off.*/\1 on \"\" /")"
+	fi
+	
+}
+	
+# unloadmodule $module [$save=1|0]
+unloadmodule(){
+	result="$(/sbin/rmmod -f $1  2>&1)"
+	if [ "$?" = "1" ] ; then
+		$dialog $timeout --title "$(eval_gettext 'Error')" --msgbox "$result" 0 0
+	else
+		if [ "$2" = "1" ] ; then
+			if [ "$(grep "$1" $rcmodules)" ] ; then
+				sed -i "s|^.*[ \t]\+$1[ \t]*$|\# /sbin/modprobe $1|" $rcmodules
+			fi
+			
+			if [ "$(grep -e "blacklist $1" $blacklistfile)" ] ; then
+				sed -i "s|^.*blacklist[ \t]\+$1[ \t]*$|blacklist $1|" $blacklistfile
+			else
+				echo "blacklist $1" >> $blacklistfile
+			fi
+		fi
+		modules="$(echo "$modules" | sed -e "s/\(\"$1\" .*\) on.*/\1 off \"\" /")"
+		
+	fi
+}	
+
+listmodules(){
+
+	if [ ! "$dialog" = "dialog" ] ; then
+		reply=$(eval ${dialog} \
+		--stdout \
+		--title \"$category $(eval_gettext 'category')\" \
+		--cancel-label \"$(eval_gettext 'Back')\" \
+		--check \"$(eval_gettext 'Save configuration changes for next system boot')\" \"off\" \
+		--item-help \
+		--checklist \
+		\"$(eval_gettext 'Select kernel modules from the') $category $(eval_gettext 'category to load them :')\" \
+		27 75 21 $modules )
+		else
+		reply=$(eval ${dialog} \
+		--stdout \
+		--title \"$category $(eval_gettext 'category')\" \
+		--cancel-label \"$(eval_gettext 'Back')\" \
+		--item-help \
+		--checklist \
+		\"$(eval_gettext 'Select kernel modules from the') $category $(eval_gettext 'category to load them :')\" \
+		27 75 21 $modules )
+
+		saveconfig='1'
+
+	fi
+
+}
+
+promptcategory() {
+category=$(eval ${dialog} \
+--stdout \
+--cancel-label \"$(eval_gettext 'Exit')\" \
+--title \"$(eval_gettext 'Kernel modules manager')\" \
+--menu \
+\"$(eval_gettext 'Welcome to') $(basename $0), $(eval_gettext 'please choose a module category:')\" \
+25 75 14 ${categories} )
+
+}
+
+categories=$(ls -1 /lib/modules/$(uname -r)/kernel | egrep -v "crypto|drivers" | tr -d " " | sed -e 's|\([^ ]*\)|\"\1\" \"\" \\|' )
+driverscategories=$(ls -1 /lib/modules/$(uname -r)/kernel/drivers | tr -d " " | sed -e 's|\([^ ]*\)|\"\1\" \"\" \\|' )
+categories="$(echo "${categories} ${driverscategories}" | sort -u)"
+
+while [ "1" = "1" ] ; do
+	
+	promptcategory
+
+	category=$(expr "$category" : '[[:space:]]*\(.*\)[[:space:]]*$')
+
+	[ ! "$category" ] && exit 0
+	[ ! "$dialog" = "dialog" ] && $dialog $timeout --title "$(eval_gettext 'Probing') $category $(eval_gettext 'modules')" --msgbox "$(eval_gettext 'Probing modules and building a list for you ...')" 0 0 &
+
+	activemodules="$(lsmod | sed -n 's/^\([^ \t]*\)[ \t]*[0-9]\+[ \t]*[0-9]*.*[ \t]*$/\1/p')"
+		
+	modules="$(find /lib/modules/$(uname -r)/kernel -type f -iname *.ko | sort | sed -n "s|^.*kernel\(.*\/$category.*/\)\([^/]*\)\.ko$| \"\2\" \"\" off \"\1\2.ko\" |p" | tr - _)"
+	
+	
+	for module in $activemodules ; do
+		modules="$(echo "$modules" | sed -e "s/\(\"$module\" .*\) off.*/\1 on \"\" /")" 
+	done
+
+
+	while [ "1" = "1" ] ; do
+
+		listmodules
+		[ ! "$reply" ] && break
+		
+		selectedmodules="$(echo "$reply" | head -n1 | tr / " " )"
+		saveconfig="$(echo "$reply" | tail -n1)"
+		[ "$saveconfig" = "checked" ] && saveconfig='1'
+
+		for module in $activemodules ; do
+			if [ "$(echo $modules | grep -w \"$module\")" ] ; then
+				if [ ! "$(echo $selectedmodules | grep -w $module)" ] ; then
+				
+					echo "$module off"
+					unloadmodule $module $saveconfig		 
+				fi
+			fi
+		done
+		for module in $selectedmodules ; do
+			if [ ! "$(echo $activemodules | grep -w $module)" ] ; then
+			
+				echo "$module on"
+				loadmodule $module $saveconfig	 
+			fi
+		done	
+
+		activemodules="$(lsmod | sed -n 's/^\([^ \t]*\)[ \t]*[0-9]\+[ \t]*[0-9]*.*[ \t]*$/\1/p')"
+	done
+done
+
+
+# end
+

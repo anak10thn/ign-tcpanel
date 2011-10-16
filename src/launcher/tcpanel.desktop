@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Toroo Control Panel
+Comment=Toroo Control Panel
+Type=Application
+Terminal=false
+Exec=gksu tcpanel
+Icon=start-here
+Categories=GNOME;Settings;
+OnlyShowIn=GNOME;
