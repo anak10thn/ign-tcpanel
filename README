@@ -1,8 +1,8 @@
-TCPanel
+ign-tcpanel
 -------
 
-TCPanel control panel is standard on Toroo GNU / Linux, which serves to manage
-service, repository, packages, kernel modules, etc.. TCPanel made ​​with PHP-GTK2 and can work well on Slackware GNU / Linux.
+ign-tcpanel is a control panel for distribution for IGN GNU/Linux, which serves to manage
+service, repository, packages, kernel modules, etc.. ign-tcpanel made ​​with PHP-GTK2.
 
 INSTALL
 -------
