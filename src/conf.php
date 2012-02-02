@@ -17,13 +17,13 @@
  *      
  *      Ibnu Yahya <ibnu.yahya@toroo.org>
  */
-	$app_name = "TCPanel";
-	$app_desc = "Toroo Control Panel";
-	$app_version = "1.0.1";
+	$app_name = "IGN CONTROL PANEL";
+	$app_desc = "Igos Nusantara Control Panel";
+	$app_version = "1.0.7";
 	$app_copyright = "Ibnu Yahya (Author)";
 	$app_license = "GPL";
-	$app_web = "http://toroo.org";
-	$app_iconfile = "./image/toroopanel.png";
+	$app_web = "http://ibnuyahya.toroo.org";
+	$app_iconfile = "./image/ign-control-panel.png";
 
 	$modules_dir="./modules";
 
@@ -33,7 +33,7 @@
 
 	static $modules = array();
 
-	$distro_name = "toroo-v3.1-cempaka";
+	$distro_name = "IGN-7.1";
 
 	require_once ("functions.php");
 
