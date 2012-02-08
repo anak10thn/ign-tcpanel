@@ -1,0 +1,12 @@
+
+[Desktop Entry]
+Encoding=UTF-8
+Name=IGN Control Panel
+Comment=IGOS Nusantara Control Panel
+Type=Application
+Terminal=false
+Exec=beesu ign-control-panel
+Icon=start-here
+Categories=GNOME;Settings;System;
+OnlyShowIn=GNOME;
+GenericName[en_US.utf8]=IGOS Nusantara Control Panel
