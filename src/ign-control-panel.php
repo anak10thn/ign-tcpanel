@@ -82,7 +82,6 @@ function scan_modules ()
 
 	$uid = posix_getuid ();
 
-	//get all modules
 	if (is_dir ($modules_dir))
 	{
 		if ($dir_handle = opendir ($modules_dir))
@@ -120,15 +119,7 @@ function scan_modules ()
 	};
 }
 
-//
-//
-//main
-//
-//
-//
 
-//main window
-//
 $tpanel_pixbuf = GdkPixbuf :: new_from_file ($app_iconfile);
 $win_main = new GtkWindow ();
 $win_main -> set_title ($app_desc);
@@ -139,7 +130,7 @@ function fullscreen() {
 	global $win_main;
 	$win_main -> fullscreen();
 }
-//menubar and items
+
 $menupop_file = new GtkMenu ();
 $menu_file = new GtkMenuItem ("_File");
 $menu_fullscreen = new GtkMenuItem ("_Fullscreen");
@@ -161,7 +152,7 @@ $menubar_main = new GtkMenuBar ();
 $menubar_main -> append ($menu_file);
 $menubar_main -> append ($menu_help);
 
-//iconview and liststore
+
 $iv_main = new GtkIconView ();
 $ivmodel_main = new GtkListStore (GdkPixBuf :: gtype, Gtk);
 $iv_main -> set_model ($ivmodel_main);
@@ -176,7 +167,7 @@ $iv_main -> connect ("item-activated", "process_module", $ivmodel_main);
 
 scan_modules();
 
-//draw icon 
+
 foreach ($modules as $k => $v)
 {
 	$icon_file = $modules_dir . "/" . $v["name"] . "/" . $v["icon"];
@@ -184,13 +175,13 @@ foreach ($modules as $k => $v)
 	$ivmodel_main -> set ($ivmodel_main -> append(), 0, $pixbuf, 1, $v["desc"]); 
 };
 
-//put in scrolled win
+
 $scrollwin_main = new GtkScrolledWindow ();
 $scrollwin_main -> set_policy (Gtk:: POLICY_AUTOMATIC, Gtk:: POLICY_AUTOMATIC);
 $scrollwin_main -> add ($iv_main);
 
 
-//status bar
+
 if (posix_getuid () == 0)
 {
 	$msg_user_status = "Running as root. All modules available.";
@@ -205,20 +196,19 @@ $cx_id = $statusbar_main -> get_context_id ('user_status');
 $statusbar_main -> push ($cx_id, $msg_user_status);
 
 
-//main table
+
 $table_main = new GtkTable (11, 1, true);
 $table_main -> attach ($menubar_main, 0, 1, 0, 1);
 $table_main -> attach ($scrollwin_main, 0, 1, 1, 10);
 $table_main -> attach ($statusbar_main, 0, 1, 10, 11);
 
 
-//add main table, show them all
 $win_main -> add ($table_main);
 
 $win_main -> show_all ();
 
 
-//process command line argument
+
 if ($argc > 1)
 {
 	foreach ($modules as $k => $v)

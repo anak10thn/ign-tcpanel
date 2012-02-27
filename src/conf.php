@@ -18,11 +18,11 @@
  *      Ibnu Yahya <ibnu.yahya@toroo.org>
  */
 	$app_name = "IGN CONTROL PANEL";
-	$app_desc = "Igos Nusantara Control Panel";
-	$app_version = "1.0.7";
+	$app_desc = "IGOS Nusantara Control Panel";
+	$app_version = "1.0.9";
 	$app_copyright = "Ibnu Yahya (Author)";
 	$app_license = "GPL";
-	$app_web = "http://ibnuyahya.toroo.org";
+	$app_web = "http://igos-nusantara.or.id";
 	$app_iconfile = "./image/ign-control-panel.png";
 
 	$modules_dir="./modules";

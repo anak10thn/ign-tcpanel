@@ -1,0 +1,12 @@
+
+[Desktop Entry]
+Encoding=UTF-8
+Name=IGN Control Panel (root)
+Comment=IGOS Nusantara Control Panel for root
+Type=Application
+Terminal=false
+Exec=beesu ign-cpanel
+Icon=start-here
+Categories=GNOME;Settings;System;
+OnlyShowIn=GNOME;
+GenericName[en_US.utf8]=IGOS Nusantara Control Panel (root)

@@ -29,7 +29,7 @@ install:
 	@echo "Created directori"
 	-cp -R -L src/* $(PREFIX)/usr/share/ign-cpanel
 	@echo "Installed source code to prefix directori"
-	-cp -R -L src/launcher/ign-cpanel.desktop $(PREFIX)/usr/share/applications/
+	-cp -R -L src/launcher/* $(PREFIX)/usr/share/applications/
 	@echo "Installed launcher"
 	-cp -R -L src/bin/ign-cpanel $(PREFIX)/usr/sbin/
 	@echo "Makefile: IGN Control Panel installed."
